@@ -10,6 +10,8 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from bots.bot_adapter import BotAdapter
+from bots.bot_controller.file_uploader import FileUploader
+from bots.bot_controller.screen_and_audio_recorder import ScreenAndAudioRecorder
 from bots.models import (
     Bot,
     BotDebugScreenshot,
@@ -34,12 +36,10 @@ from bots.utils import meeting_type_from_url
 from .audio_output_manager import AudioOutputManager
 from .automatic_leave_configuration import AutomaticLeaveConfiguration
 from .closed_caption_manager import ClosedCaptionManager
-from .file_uploader import FileUploader
 from .gstreamer_pipeline import GstreamerPipeline
 from .individual_audio_input_manager import IndividualAudioInputManager
 from .pipeline_configuration import PipelineConfiguration
 from .rtmp_client import RTMPClient
-from .screen_and_audio_recorder import ScreenAndAudioRecorder
 
 gi.require_version("GLib", "2.0")
 from gi.repository import GLib
@@ -228,6 +228,8 @@ class BotController:
             logger.info("Telling media recorder receiver to cleanup...")
             self.screen_and_audio_recorder.cleanup()
 
+        self.closed_caption_manager.delete_utterances()
+
         if self.get_recording_file_location():
             logger.info("Telling file uploader to upload recording file...")
             file_uploader = FileUploader(
@@ -277,10 +279,11 @@ class BotController:
             return GstreamerPipeline.OUTPUT_FORMAT_MP4
 
     def get_recording_file_location(self):
-        if self.pipeline_configuration.rtmp_stream_audio or self.pipeline_configuration.rtmp_stream_video:
-            return None
-        else:
-            return os.path.join("/tmp", self.get_recording_filename())
+        # if self.pipeline_configuration.rtmp_stream_audio or self.pipeline_configuration.rtmp_stream_video:
+        #     return None
+        # else:
+        #     return os.path.join("/tmp", self.get_recording_filename())
+        return None
 
     def should_create_gstreamer_pipeline(self):
         # For google meet, we're doing a media recorder based recording technique that does the video processing in the browser
@@ -318,6 +321,7 @@ class BotController:
         self.closed_caption_manager = ClosedCaptionManager(
             save_utterance_callback=self.save_closed_caption_utterance,
             get_participant_callback=self.get_participant,
+            delete_utterances_callback=self.delete_utterances,
         )
 
         self.rtmp_client = None
@@ -555,6 +559,10 @@ class BotController:
         )
 
         RecordingManager.set_recording_transcription_in_progress(recording_in_progress)
+
+    def delete_utterances(self):
+        recording = self.get_recording_in_progress()
+        Utterance.objects.filter(recording=recording).delete()
 
     def save_individual_audio_utterance(self, message):
         from bots.tasks.process_utterance_task import process_utterance

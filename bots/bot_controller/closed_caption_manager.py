@@ -26,10 +26,17 @@ class CaptionEntry:
 
 
 class ClosedCaptionManager:
-    def __init__(self, *, save_utterance_callback, get_participant_callback):
+    def __init__(self, *, save_utterance_callback, get_participant_callback, delete_utterances_callback):
         self.captions: Dict[str, CaptionEntry] = {}
         self.save_utterance_callback = save_utterance_callback
+        self.delete_utterances_callback = delete_utterances_callback
         self.get_participant_callback = get_participant_callback
+
+    def delete_utterances(self):
+        """
+        Delete all utterances from the database
+        """
+        self.delete_utterances_callback()
 
     def upsert_caption(self, caption_data: dict):
         """
