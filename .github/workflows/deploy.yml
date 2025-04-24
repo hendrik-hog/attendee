@@ -31,7 +31,7 @@ jobs:
       - name: Login to ECR
         uses: docker/login-action@v3
         with:
-          registry: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com
+          registry: 028828968899.dkr.ecr.eu-central-1.amazonaws.com
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -39,6 +39,6 @@ jobs:
           context: .
           push: true
           load: true
-          tags: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/mygenassist/attendee:latest
+          tags: 028828968899.dkr.ecr.eu-central-1.amazonaws.com/mygenassist/attendee:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
