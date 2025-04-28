@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: attendee-app
+  labels:
+    app: attendee-app
+spec:
+  selector:
+    app: attendee-app
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

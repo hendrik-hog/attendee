@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attendee-worker
+  labels:
+    app: attendee-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: attendee-worker
+  template:
+    metadata:
+      labels:
+        app: attendee-worker
+    spec:
+      containers:
+      - name: attendee-worker
+        image: ${CONTAINER_REGISTRY}/mygenassist/attendee:latest
+        imagePullPolicy: Always
+        command: ["/bin/bash", "-c"]
+        args:
+          - "/opt/bin/entrypoint.sh && celery -A attendee worker -l INFO"
+        envFrom:
+        - configMapRef:
+            name: attendee-config
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: redis-url
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: django-secret-key
+        - name: EMAIL_HOST_USER
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: email-host-user
+              optional: true
+        - name: EMAIL_HOST_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: email-host-password
+              optional: true
+        - name: ERROR_REPORTS_RECEIVER_EMAIL_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: attendee-secrets
+              key: error-reports-email
+              optional: true
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}

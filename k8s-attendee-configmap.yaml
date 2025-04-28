@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: attendee-config
+data:
+  DJANGO_SETTINGS_MODULE: "attendee.settings.production-gke"
+  CSRF_TRUSTED_ORIGINS: "https://*.attendee.dev"
